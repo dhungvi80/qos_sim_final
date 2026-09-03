@@ -1,0 +1,13 @@
+# Core (required for paper pipeline without NetSquid)
+numpy>=1.24
+networkx>=3.0
+scipy>=1.10
+pulp>=2.7
+
+# Optional: real NetSquid telemetry (Section 4.1 / 5.1)
+# Register at https://netsquid.org then:
+#   pip install --extra-index-url https://<token>@pypi.netsquid.org netsquid==1.1.8
+
+# Optional: Aer noise experiments (not required for core tables)
+# qiskit
+# qiskit-aer
