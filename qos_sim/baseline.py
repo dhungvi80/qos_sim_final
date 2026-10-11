@@ -104,6 +104,74 @@ def exact_solver_pulp(
     )
 
 
+@dataclass
+class ExactResult:
+    x: np.ndarray
+    served_utility: float      # NaN if no incumbent was found
+    runtime_s: float
+    optimal: bool              # True only if the solver proved optimality
+    # Valid UPPER bound on the optimum (HiGHS dual bound). Equals served_utility
+    # when optimal; NaN if the solver reported none. Lets callers report a valid
+    # optimality-gap bound (U_bound - U) / U_bound even when the time limit hits.
+    bound: float = float("nan")
+
+
+def exact_solver_highs(
+    qubo: QUBOInstance,
+    requests: list[Request],
+    conflicts: list[tuple[int, int]],
+    time_limit_s: float = 60.0,
+) -> ExactResult:
+    """Exact reference optimum of the constrained problem
+        max sum_i w_i x_i   s.t.  x_a + x_b <= 1  for every conflict (a, b),
+    solved with HiGHS through scipy.optimize.milp (no CBC binary needed).
+
+    Same ILP as exact_solver_pulp. `optimal` is False when the time limit is
+    hit or the solver fails; callers must then NOT report an optimality gap
+    (the old PuLP path silently produced gap 0 in that case).
+    """
+    import time
+    from scipy.optimize import Bounds, LinearConstraint, milp
+    from scipy.sparse import coo_matrix
+
+    t0 = time.perf_counter()
+    n = len(qubo.variables)
+    if n == 0:
+        return ExactResult(np.zeros(0), 0.0, time.perf_counter() - t0, True, 0.0)
+
+    weight_of = {r.id: r.priority_weight for r in requests}
+    c = -np.array([weight_of[v.request_id] for v in qubo.variables], dtype=float)
+
+    constraints = []
+    if conflicts:
+        pairs = np.asarray(conflicts, dtype=int)
+        rows = np.repeat(np.arange(len(pairs)), 2)
+        A = coo_matrix((np.ones(2 * len(pairs)), (rows, pairs.ravel())),
+                       shape=(len(pairs), n)).tocsr()
+        constraints = [LinearConstraint(A, -np.inf, 1.0)]
+
+    res = milp(c=c, integrality=np.ones(n), bounds=Bounds(0, 1),
+               constraints=constraints, options={"time_limit": float(time_limit_s)})
+    runtime = time.perf_counter() - t0
+
+    # milp minimises -U, so the dual (lower) bound on -U is -upper bound on U.
+    dual = getattr(res, "mip_dual_bound", None)
+    bound = -float(dual) if dual is not None and np.isfinite(dual) else float("nan")
+
+    if res.x is None:
+        return ExactResult(np.zeros(n), float("nan"), runtime, False, bound)
+    x = np.round(res.x)
+    feasible = verify_feasible(x, conflicts)
+    u = served_utility(qubo, x)
+    optimal = bool(res.status == 0 and feasible)
+    if optimal:
+        bound = u          # proven optimum: bound is tight
+    elif np.isfinite(bound):
+        bound = max(bound, u)   # an upper bound can never be below an incumbent
+    return ExactResult(x=x, served_utility=u, runtime_s=runtime,
+                       optimal=optimal, bound=bound)
+
+
 def greedy_schedule(
     qubo: QUBOInstance,
     requests: list[Request],

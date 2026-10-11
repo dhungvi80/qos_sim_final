@@ -133,6 +133,7 @@ def prune(
     fidelity_threshold: float,
     priority_order: Optional[Callable[[Request], float]] = None,
     valid_paths: Optional[dict[str, set[str]]] = None,
+    collision_pruning: bool = False,
 ) -> tuple[list[Variable], PruningStats]:
     """Algorithm 1: Real-time Variable Pruning.
 
@@ -145,11 +146,12 @@ def prune(
         5. Remove all variables that violate any hard constraint.
         6. Return the reduced active subspace.
 
-    The three feasibility conditions tested (step 3) are EXACTLY the
-    predicate T(i,k,t) used in Proposition 1:
+    The unary feasibility conditions tested (step 3) are
         T(i,k,t) = [fidelity >= F_min] AND [temporal availability]
-                   AND [no resource collision]
-    Do not add a fourth condition here — see module docstring.
+    The third condition [no resource collision] is applied only when
+    collision_pruning=True (see below); it is OFF by default because it is
+    not a unary filter. Do not add further conditions here — see module
+    docstring.
 
     valid_paths : optional map request_id -> set of path_ids that
         actually connect that request's source-destination pair. On a
@@ -164,6 +166,17 @@ def prune(
         |requests|*|paths|*|time_slots| — since the latter would count
         physically meaningless (request, path) combinations that were
         never real candidates in the first place.
+
+    collision_pruning : bool, default False
+        False: only the UNARY conditions (fidelity, availability) are
+        applied. A variable is dropped only if it can never appear in any
+        feasible schedule, so the optimum is preserved (Design Property 1).
+        Pairwise conflicts are left to the QUBO penalty (Theorem 1) and to
+        Algorithm 3. True: additionally drops a variable whose path shares
+        a resource with one retained earlier. This depends on processing
+        order and is a heuristic reduction that can remove the optimum
+        (measured: optimum lost in up to 30/30 synthetic instances); keep
+        it only for ablations, and report |A| separately when used.
 
     Requests are processed in descending priority_weight order (ties
     broken by id) so that, when two variables would otherwise collide,
@@ -198,9 +211,12 @@ def prune(
 
     # Step 1: initialize the active set (done above: active_variables = [])
     for req in ordered_requests:
+        # sorted(): valid_paths[...] is a set of str; str hashes are randomised per
+        # process (PYTHONHASHSEED), so iteration order would otherwise change which
+        # path reserves a resource first and make |A| non-reproducible for a fixed seed.
         candidate_paths = (
             paths if valid_paths is None
-            else [paths_by_id[pid] for pid in valid_paths.get(req.id, ()) if pid in paths_by_id]
+            else [paths_by_id[pid] for pid in sorted(valid_paths.get(req.id, ())) if pid in paths_by_id]
         )
         for t in time_slots:
             for path in candidate_paths:
@@ -215,14 +231,15 @@ def prune(
                 if not available:
                     stats.rejected_availability += 1
                     continue
-                if telemetry.has_collision(path, t, reserved):
+                if collision_pruning and telemetry.has_collision(path, t, reserved):
                     stats.rejected_collision += 1
                     continue
 
                 # Step 4: retain — variable passes all three conditions
                 active_variables.append(Variable(req.id, path.id, t))
-                for resource in path.resources:
-                    reserved.setdefault((resource, t), set()).add(path.id)
+                if collision_pruning:
+                    for resource in path.resources:
+                        reserved.setdefault((resource, t), set()).add(path.id)
 
                 # Step 5 (implicit): anything not appended here is removed
                 # by construction — no separate pass is needed since we

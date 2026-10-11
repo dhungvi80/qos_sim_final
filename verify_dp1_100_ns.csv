@@ -1,0 +1,6 @@
+n_nodes,trial_seed,telemetry,size_D,size_A,rho,alpha,rejected_fidelity,rejected_availability,rejected_collision,n_conflicts_A,n_conflicts_full,lambda_star_A,exact_A_optimal,U_ILP_A,U_Greedy_A,U_ILP_forced,forced_optimal,dp1_match,exact_A_runtime_s,forced_runtime_s
+100,42,netsquid,600,219,0.635,0.365,381,0,0,657,5130,9.867,True,257.084279,257.084279,257.084279,True,True,0.0073,0.0115
+100,43,netsquid,600,267,0.555,0.445,333,0,0,930,5358,9.699,True,301.480932,297.080226,301.480932,True,True,0.0089,0.0123
+100,44,netsquid,600,264,0.56,0.44,336,0,0,885,5550,9.9552,True,289.218538,289.218538,289.218538,True,True,0.0081,0.0124
+100,45,netsquid,600,273,0.545,0.455,327,0,0,885,4650,9.7443,True,302.687574,302.687574,302.687574,True,True,0.0076,0.0113
+100,46,netsquid,600,222,0.63,0.37,378,0,0,636,5355,9.8994,True,290.525342,290.525342,290.525342,True,True,0.0062,0.0113
