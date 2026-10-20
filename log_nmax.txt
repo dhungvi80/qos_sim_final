@@ -1,0 +1,15 @@
+nohup: ignoring input
+=== D4-B n_max sweep  n=25 trials=8 n_max=[10, 14, 18] GWO=10x25 p=1 ===
+  seed=  42 |A|=123  nmax=10:M=16/raw=0/gap=0.00%/t=3.3s  nmax=14:M=12/raw=0/gap=0.00%/t=35.7s  nmax=18:M=9/raw=0/gap=0.00%/t=822.1s
+  seed=  43 |A|=120  nmax=10:M=16/raw=0/gap=0.00%/t=4.0s  nmax=14:M=14/raw=0/gap=2.86%/t=43.7s  nmax=18:M=10/raw=0/gap=0.00%/t=807.4s
+  seed=  44 |A|=138  nmax=10:M=17/raw=0/gap=0.00%/t=3.6s  nmax=14:M=14/raw=0/gap=2.35%/t=34.9s  nmax=18:M=11/raw=0/gap=2.35%/t=975.1s
+  seed=  45 |A|=138  nmax=10:M=16/raw=0/gap=7.37%/t=4.1s  nmax=14:M=11/raw=0/gap=0.00%/t=38.8s  nmax=18:M=10/raw=0/gap=3.12%/t=1031.7s
+  seed=  46 |A|=114  nmax=10:M=14/raw=0/gap=1.16%/t=3.3s  nmax=14:M=12/raw=0/gap=4.52%/t=37.7s  nmax=18:M=9/raw=0/gap=2.02%/t=856.2s
+  seed=  47 |A|=120  nmax=10:M=16/raw=0/gap=0.00%/t=3.1s  nmax=14:M=11/raw=0/gap=0.00%/t=39.0s  nmax=18:M=10/raw=0/gap=0.51%/t=823.5s
+  seed=  48 |A|=135  nmax=10:M=17/raw=0/gap=0.00%/t=3.5s  nmax=14:M=12/raw=0/gap=0.00%/t=36.4s  nmax=18:M=11/raw=0/gap=0.00%/t=979.8s
+  seed=  49 |A|=117  nmax=10:M=16/raw=0/gap=0.00%/t=3.4s  nmax=14:M=12/raw=0/gap=0.00%/t=27.9s  nmax=18:M=9/raw=0/gap=0.00%/t=568.6s
+--- Summary by n_max ---
+  n_max=10: raw_feas=0/8  mean_M=16.0  mean_gap=1.07%  mean_t=3.5s
+  n_max=14: raw_feas=0/8  mean_M=12.2  mean_gap=1.22%  mean_t=36.8s
+  n_max=18: raw_feas=0/8  mean_M=9.9  mean_gap=1.00%  mean_t=858.1s
+Wrote /home/dhungvi/quantum_project/qos_sim_final/d4b_nmax_sweep_25.csv
